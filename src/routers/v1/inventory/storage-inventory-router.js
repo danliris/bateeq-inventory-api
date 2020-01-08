@@ -41,7 +41,9 @@ router.get('/:storageId/inventories', (request, response, next) => {
                             "Nama": doc.storage.name,
                             "Barcode": doc.item.code,
                             "Nama Barang": doc.item.name,
-                            "Kuantitas": doc.quantity
+                            "Kuantitas": doc.quantity,
+                            "Harga" : doc.item.domesticSale,
+                            "Subtotal" : (doc.quantity)*(doc.item.domesticSale)
                         }
                         data.push(_data);
                     }
@@ -51,6 +53,8 @@ router.get('/:storageId/inventories', (request, response, next) => {
                         "Barcode": "string",
                         "Nama Barang": "string",
                         "Kuantitas": "number",
+                        "Harga" : "number",
+                        "Subtotal" : "number"
                     };
                     response.xls(`Report Monthly Stock.xlsx`, data, options);
                 }
