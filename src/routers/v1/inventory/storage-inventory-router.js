@@ -19,11 +19,96 @@ router.get('/:storageId/inventories', (request, response, next) => {
         
         manager.readByStorageId(storageId,query)
             .then(docs => { 
-                var result = resultFormatter.ok(apiVersion, 200, docs.data);
-                delete docs.data;
-                result.info = docs;
-                response.send(200, result);
+                // var result = resultFormatter.ok(apiVersion, 200, docs.data);
+                // delete docs.data;
+                // result.info = docs;
+                // response.send(200, result);
+                if ((request.headers.accept || '').toString().indexOf("application/xls") < 0) {
+                    var result = resultFormatter.ok(apiVersion, 200, docs.data);
+                    delete docs.data;
+                    result.info = docs;
+                    response.send(200, result);
+                } else {
+                    var result = resultFormatter.ok(apiVersion, 200, docs.data);
+                    var data = docs.data;
+                    var data = []
+                    delete docs.data;
+                    result.info = docs;
+                    //var result = [];
+                    for (const doc of result.data) {
+                        const _data = {
+                            "Kode Toko": doc.storage.code,
+                            "Nama": doc.storage.name,
+                            "Barcode": doc.item.code,
+                            "Nama Barang": doc.item.name,
+                            "Kuantitas": doc.quantity,
+                            "Harga" : doc.item.domesticSale,
+                            "Subtotal" : (doc.quantity)*(doc.item.domesticSale)
+                        }
+                        data.push(_data);
+                    }
+                    var options = {
+                        "Kode Toko": "string",
+                        "Nama": "string",
+                        "Barcode": "string",
+                        "Nama Barang": "string",
+                        "Kuantitas": "number",
+                        "Harga" : "number",
+                        "Subtotal" : "number"
+                    };
+                    response.xls(`Report Monthly Stock.xlsx`, data, options);
+                }
             })
+            .catch(e => {
+                var error = resultFormatter.fail(apiVersion, 400, e);
+                response.send(400, error);
+            })
+
+    })
+});
+
+router.get('/:storageId/ageinv', (request, response, next) => {
+    db.get().then(db => {
+        var manager = new InventoryManager(db, {
+            username: 'router'
+        });
+        
+        var storageId = request.params.storageId;
+        var query = request.query;
+        
+        manager.getOverallStock(storageId,query)
+            .then(docs => { 
+            //     var result = resultFormatter.ok(apiVersion, 200, docs);
+            //     response.send(200, result);
+            // })
+            if ((request.headers.accept || '').toString().indexOf("application/xls") < 0) {
+                var data = docs;
+                var result = resultFormatter.ok(apiVersion, 200, data);
+                response.send(200, result);
+            } else {
+                var data = [];
+                for (const doc of docs) {
+                    const _data = {
+                        "Kode Toko": doc.storagecode,
+                        "Nama": doc.storagename,
+                        "Barcode": doc.itemcode,
+                        "Nama Barang": doc.itemname,
+                        "Kuantitas": doc.quantity,
+                        "Umur Barang (Hari)": doc.sls
+                    }
+                    data.push(_data);
+                }
+                var options = {
+                    "Kode Toko": "string",
+                    "Nama": "string",
+                    "Barcode": "string",
+                    "Nama Barang": "string",
+                    "Kuantitas": "number",
+                    "Umur Barang (Hari)": "number"
+                };
+                response.xls(`Report Age Stock.xlsx`, data, options);
+            }
+        })
             .catch(e => {
                 var error = resultFormatter.fail(apiVersion, 400, e);
                 response.send(400, error);
