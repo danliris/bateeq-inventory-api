@@ -18,9 +18,41 @@ router.get('/:storageCode/:month/:year', passport, (request, response, next) => 
 
         manager.getStockInStorage(storageCode, month, year)
             .then(docs => {
-                var result = resultFormatter.ok(apiVersion, 200, docs);
+                // var result = resultFormatter.ok(apiVersion, 200, docs);
+                // response.send(200, result);
+            //})
+            if ((request.headers.accept || '').toString().indexOf("application/xls") < 0) {
+                var data = docs;
+                var result = resultFormatter.ok(apiVersion, 200, data);
                 response.send(200, result);
-            })
+            } else {
+               var data = [];
+                for (const doc of docs) {
+                    const _data = {
+                        "Kode Toko": storageCode,
+                        "Bulan": month,
+                        "Tahun": year,
+                        "Barcode": doc.itemCode,
+                        "Nama Barang": doc.itemName,
+                        "Kuantitas" : doc.quantity,
+                        "Total HPP" : doc.totalHPP,
+                        "Total Sale" : doc.totalSale
+                    }
+                    data.push(_data);
+                }
+                var options = {
+                    "Kode Toko": "string",
+                    "Bulan": "string",
+                    "Tahun": "string",
+                    "Barcode": "string",
+                    "Nama Barang" : "string",
+                    "Kuantitas": "number",
+                    "Total HPP" : "number",
+                    "Total Sale" : "number"
+                };
+                response.xls(`Report Detail Monthly Stock.xlsx`, data, options);
+            }
+        })
             .catch(e => {
                 var error = resultFormatter.fail(apiVersion, 400, e);
                 response.send(400, error);

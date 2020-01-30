@@ -41,6 +41,7 @@ router.get('/:storageId/inventories', (request, response, next) => {
                             "Nama": doc.storage.name,
                             "Barcode": doc.item.code,
                             "Nama Barang": doc.item.name,
+                            "RO":doc.item.article.realizationOrder,
                             "Kuantitas": doc.quantity,
                             "Harga" : doc.item.domesticSale,
                             "Subtotal" : (doc.quantity)*(doc.item.domesticSale)
