@@ -164,4 +164,26 @@ router.get('/items/:itemId', (request, response, next) => {
     })
 }); 
 
+router.get('/items-summary/:itemcode', (request, response, next) => {
+    db.get().then(db => {
+        var manager = new InventoryManager(db, {
+            username: 'router'
+        });
+        
+        
+        var itemcode = request.params.itemcode;
+
+        manager.getSumInventoryByItem(itemcode)
+            .then(doc => {
+                var result = resultFormatter.ok(apiVersion, 200, doc);
+                response.send(200, result); 
+            })
+            .catch(e => {
+                var error = resultFormatter.fail(apiVersion, 400, e);
+                response.send(400, error);
+            })
+
+    })
+});
+
 module.exports = router;
